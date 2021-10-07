@@ -1,6 +1,9 @@
-
 Project TakeThis
 
+Dependencies:
+  - keybert-0.5.0
+
+Directory Structure:
 course
 - raw-data.\*
 - parsed-data.json
