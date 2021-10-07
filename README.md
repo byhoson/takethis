@@ -1,20 +1,37 @@
-Project TakeThis
+# Project TakeThis
 
+## Getting Started
 Dependencies:
   - keybert-0.5.0
 
-Directory Structure:
+---
+## Directory Structure
+```
 course
-- raw-data.\*
-- parsed-data.json
+- [data].\*
+- [data].json
+- [data]-db.json
 - course-db.json
 
 career
-- raw-data.\*
-- parsed-data.json
+- [data]-db.json
 - career-db.json
 
 scripts
 - parse-raw-data.py
 - build-course-db.py
 - build-career-db.py
+```
+---
+## Creating DB
+
+[data].* -> [data].json
+```
+python3 [parse | crawl]-[data].py
+
+```
+
+[data].json -> [data]-db.json
+```
+python3 extract-data.py
+```
