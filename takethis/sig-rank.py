@@ -45,5 +45,5 @@ def get_rank(career):
         courses = json.load(json_file)
     for course in courses:
         s = sig_sim(course, career)
-        rank[course['course_name']] = s
+        rank[course['course_id']] = s
         
