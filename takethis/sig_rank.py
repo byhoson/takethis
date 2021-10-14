@@ -1,5 +1,6 @@
 import os
 import math
+import json
 
 PROJECT_HOME = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 COURSE_DB = os.path.join(PROJECT_HOME, 'course/cse-courses-db.json') 
@@ -24,7 +25,7 @@ def cosine_sim(course, career):
     course_keywords = course['course_keywords'] # list if pairs
     inner_prod = 0.0
     for kw in course_keywords:
-        ineer_prod += kw[1] * career[kw[0]]
+        inner_prod += kw[1] * career[kw[0]]
     course_norm = get_course_norm(course)
     career_norm = get_career_norm(career)
     sim = inner_prod / (course_norm * career_norm)
@@ -33,7 +34,7 @@ def cosine_sim(course, career):
 
 def sig_sim(course, career, measure=0):
     if measure == 0:
-        cosine_sim(course, career)
+        return cosine_sim(course, career)
     elif measure == 1:
         return 0.5
     else:
@@ -46,4 +47,4 @@ def get_rank(career):
     for course in courses:
         s = sig_sim(course, career)
         rank[course['course_id']] = s
-        
+    return rank    
