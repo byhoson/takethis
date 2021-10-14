@@ -1,11 +1,37 @@
-def build_career_sig(career):
-    pass
+import json
+import os
+
+import numpy as np
+
+# paths
+PROJECT_HOME = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+GLOSSARY_PATH = os.path.join(PROJECT_HOME, 'course/glossary.txt')
+KW_CACHE_PATH = os.path.join(PROJECT_HOME, '.cache/foo')
+
+cache_keywords_set = None
+
+def get_rank(career):
+    global cache_keywords_set
+
+    if cache_keywords_set == None:
+        cache_keywords_set = set()
+        with open(GLOSSARY_PATH) as f:
+            cache_keywords_set = set(f.read().splitlines())
+
+    result = dict()
+    for keyword in cache_keywords_set:
+        result.update({keyword:keyword_sim(keyword, career, measure=0)})
+
+    return result
 
 def keyword_sim(word1, word2, measure=0):
     if measure == 0:
-        return 0.5 #TODO make it random
+        # returns random floats in the half open interval [0.0, 1.0)
+        return np.random.random_sample()
+
     elif measure == 1:
         return 0.5
+
     else:
         return 0.5
 
