@@ -6,30 +6,66 @@ from apiclient.discovery import build
 
 # paths
 PROJECT_HOME = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-GLOSSARY_PATH = os.path.join(PROJECT_HOME, 'course/glossary.txt')
-KW_CACHE_PATH = os.path.join(PROJECT_HOME, '.cache/keywords_google.json')
-API_KEY_PATH = os.path.join(PROJECT_HOME, 'takethis/.api_keys')
+GLOSSARY_PATH = os.path.join(PROJECT_HOME, 'course/sample-glossary.txt')
+CACHE_GLOSSARY_PATH = os.path.join(PROJECT_HOME, '.cache/cache_glossary.json')
 
-cache_keywords_set = None
-cache_keywords_google = None
-flag_cache_keywords_google_update = False
+API_KEY="AIzaSyCZUjk1AQaJE77rbhPntW9ILbVOMy9jvvI"
 
-credentials_index = 0
-credentials = None
+keywords = None
+cache_glossary = None
+cache_career = None
+g_career = None # google, total result for career 
 
 def get_rank(career):
-    global cache_keywords_set
+    global cache_glossary
+    global cache_career
+    global keywords
+    global g_career
 
-    if cache_keywords_set == None:
-        cache_keywords_set = set()
-        with open(GLOSSARY_PATH) as f:
-            cache_keywords_set = set(f.read().splitlines())
+    cache_career = None 
+
+    if cache_glossary == None:
+        try:
+            with open(CACHE_GLOSSARY_PATH, 'r') as json_file:
+                cache_glossary = json.load(json_file)
+        except:
+            print('[kw_rank]: missing cache_glossary error')
+            exit(1)
+
+
+    if keywords is None:
+        with open(GLOSSARY_PATH) as txt_file:
+            keywords = txt_file.read().splitlines()
+
+    career_filename = career.replace(' ', '_')
+
+    try:
+        with open(os.path.join(PROJECT_HOME, '.cache/' + career_filename + '.json'), 'r') as json_file:
+            cache_career = json.load(json_file)
+    except:
+        print('[cache miss!]: creating an new one for ' + career)
+        # CACHE MISS!
+        # BUILD cache_[career] FOR NEW CAREER
+        # json dump
+        cache_career = dict()
+
+        for keyword in keywords:
+            cache_career[keyword] = google_query(keyword + ' AND ' + career)
+
+        career_filename = career.replace(' ', '_')
+        with open(os.path.join(PROJECT_HOME, '.cache/' + career_filename + '.json'), 'w') as json_file:
+            json.dump(cache_career, json_file)
+
+    # ASSERT (CACHE_CAREER != NONE)
+    g_career = google_query(career)
 
     result = dict()
-    for keyword in cache_keywords_set:
+
+    for keyword in keywords:
         result.update({keyword:keyword_sim(keyword, career, measure=2)})
 
     return result
+
 
 def keyword_sim(word1, word2, measure=0):
     if measure == 0:
@@ -65,53 +101,32 @@ def spacy_sim():
     print("Similarity:", token1.similarity(token2))
 
 
-def get_google_query(query):
-    global cache_keywords_google
-    global flag_cache_keywords_google_update
-    if cache_keywords_google == None:
-        try:
-            with open(KW_CACHE_PATH, 'r') as json_cache:
-                cache_keywords_google = json.load(json_cache)
-        except:
-            cache_keywords_google = dict()
 
-    
-    if query in cache_keywords_google:
-        # Cache hit
-        return cache_keywords_google[query]
-    else:
-        # Cache miss
-        flag_cache_keywords_google_update = True
+def google_query(query_string):
+    # TODO call API
+    # ret: total number of results
 
-        if len(api_key_list) == 0:
-            try:
-                with open(API_KEY_PATH, 'r') as json_cache:
-                    credentials = json.load(json_cache)
-            except:
-                print('*** Failed to get api keys for google search ***')
-                freq = 1
+    resource = build("customsearch", 'v1', developerKey=API_KEY).cse()
+    result = resource.list(q=query_string, cx='009557628044748784875:5lejfe73wrw').execute()
 
-        else:
-            api_key_index = (api_key_index + 1) % len(api_key_list)
-            resource = build('customsearch', 'v1', developerKey=credentials['api_key']).cse()
-            result = resource.list(q=query, cx=credentials['search_engine_id']).execute()
-            freq = result['queries']['totalResults']
+    if result == None:
+        print('*** API CALL ERROR ***')
+        exit(-1)
 
-        cache_keywords_google[query] = freq
-        return cache_keywords_google[query]
-        
+    return int(result['searchInformation']['totalResults'])
 
-def google_sim(word1, word2):
+
+def google_sim(keyword, career):
+    global cache_glossary
+    global cache_career
+    global g_career
+
     EPSILON = 1e-7
-    g_word1 = get_google_query(word1)
-    g_word2 = get_google_query(word2)
-    g_word1_and_word2 = get_google_query(word1 + ' AND ' + word2)
-    return g_word1_and_word2 / (g_word1 + g_word2 + EPSILON)
+    g_keyword = cache_glossary[keyword]
+    return cache_career[keyword] / (g_keyword + g_career - cache_career[keyword] + EPSILON)
 
 
-def update_cache_google_keywords():
-    assert cache_keywords_google != None
-    with open(KW_CACHE_PATH, 'w') as json_cache:
-        json.dump(cache_keywords_google, json_cache)
-
-
+if __name__ == '__main__':
+    career = input()
+    result = get_rank(career)
+    print(result)

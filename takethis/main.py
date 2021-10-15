@@ -11,6 +11,3 @@ def main(career):
 if __name__ == '__main__':
     career = input('Input Caeer: ')
     main(career)
-    if kw_rank.flag_cache_keywords_google_update == True:
-        kw_rank.update_cache_google_keywords()
-    
