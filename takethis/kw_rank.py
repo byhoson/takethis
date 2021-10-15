@@ -1,14 +1,21 @@
 import json
 import os
-
 import numpy as np
+
+from apiclient.discovery import build
 
 # paths
 PROJECT_HOME = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 GLOSSARY_PATH = os.path.join(PROJECT_HOME, 'course/glossary.txt')
-KW_CACHE_PATH = os.path.join(PROJECT_HOME, '.cache/foo')
+KW_CACHE_PATH = os.path.join(PROJECT_HOME, '.cache/keywords_google.json')
+API_KEY_PATH = os.path.join(PROJECT_HOME, 'takethis/.api_keys')
 
 cache_keywords_set = None
+cache_keywords_google = None
+flag_cache_keywords_google_update = False
+
+credentials_index = 0
+credentials = None
 
 def get_rank(career):
     global cache_keywords_set
@@ -20,7 +27,7 @@ def get_rank(career):
 
     result = dict()
     for keyword in cache_keywords_set:
-        result.update({keyword:keyword_sim(keyword, career, measure=0)})
+        result.update({keyword:keyword_sim(keyword, career, measure=2)})
 
     return result
 
@@ -33,7 +40,7 @@ def keyword_sim(word1, word2, measure=0):
         return 0.5
 
     else:
-        return 0.5
+        return google_sim(word1, word2)
 
 def spacy_sim():
     import spacy
@@ -58,5 +65,53 @@ def spacy_sim():
     print("Similarity:", token1.similarity(token2))
 
 
-def google_sim():
-    pass
+def get_google_query(query):
+    global cache_keywords_google
+    global flag_cache_keywords_google_update
+    if cache_keywords_google == None:
+        try:
+            with open(KW_CACHE_PATH, 'r') as json_cache:
+                cache_keywords_google = json.load(json_cache)
+        except:
+            cache_keywords_google = dict()
+
+    
+    if query in cache_keywords_google:
+        # Cache hit
+        return cache_keywords_google[query]
+    else:
+        # Cache miss
+        flag_cache_keywords_google_update = True
+
+        if len(api_key_list) == 0:
+            try:
+                with open(API_KEY_PATH, 'r') as json_cache:
+                    credentials = json.load(json_cache)
+            except:
+                print('*** Failed to get api keys for google search ***')
+                freq = 1
+
+        else:
+            api_key_index = (api_key_index + 1) % len(api_key_list)
+            resource = build('customsearch', 'v1', developerKey=credentials['api_key']).cse()
+            result = resource.list(q=query, cx=credentials['search_engine_id']).execute()
+            freq = result['queries']['totalResults']
+
+        cache_keywords_google[query] = freq
+        return cache_keywords_google[query]
+        
+
+def google_sim(word1, word2):
+    EPSILON = 1e-7
+    g_word1 = get_google_query(word1)
+    g_word2 = get_google_query(word2)
+    g_word1_and_word2 = get_google_query(word1 + ' AND ' + word2)
+    return g_word1_and_word2 / (g_word1 + g_word2 + EPSILON)
+
+
+def update_cache_google_keywords():
+    assert cache_keywords_google != None
+    with open(KW_CACHE_PATH, 'w') as json_cache:
+        json.dump(cache_keywords_google, json_cache)
+
+
