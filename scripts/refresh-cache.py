@@ -2,21 +2,27 @@ import os
 import json
 from apiclient.discovery import build
 
-API_KEY="AIzaSyCZUjk1AQaJE77rbhPntW9ILbVOMy9jvvI"
+# API_KEY="AIzaSyCZUjk1AQaJE77rbhPntW9ILbVOMy9jvvI"
 
-careers = ['backend engineer', 'hardware engineer']
+careers = ['backend developer', 'graphics engineer']
 
 PROJECT_HOME = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
-GLOSSARY_PATH = os.path.join(PROJECT_HOME, 'course/sample-glossary.txt')
+GLOSSARY_PATH = os.path.join(PROJECT_HOME, 'course/glossary.txt')
 CACHE_GLOSSARY_PATH = os.path.join(PROJECT_HOME, '.cache/cache_glossary.json')
+API_KEY_PATH = os.path.join(PROJECT_HOME, 'API_KEYS.txt')
+API_KEY = ""
+CX = ""
 
 def google_query(query_string):
     # TODO call API
     # ret: total number of results
-
+    global API_KEY
+    global CX
+    print(API_KEY)
+    print(CX)
     resource = build("customsearch", 'v1', developerKey=API_KEY).cse()
-    result = resource.list(q=query_string, cx='009557628044748784875:5lejfe73wrw').execute()
+    result = resource.list(q=query_string, cx=CX).execute()
 
     if result == None:
         print('*** API CALL ERROR ***')
@@ -26,6 +32,17 @@ def google_query(query_string):
 
 
 def main():
+    global API_KEY
+    global CX
+
+    # open api keys and cx
+    try:
+        with open(API_KEY_PATH, 'r') as txt_file:
+            API_KEY = txt_file.readline().rstrip('\n')
+            CX = txt_file.readline().rstrip('\n')
+    except:
+        print('[refresh_cache]: failed to get api keys')
+        exit(1)
 
     keywords = []
     cache_glossary = dict()
@@ -36,7 +53,7 @@ def main():
             keywords = txt_file.read().splitlines()
     except:
         print('[refresh_cache]: failed to open glossary')
-        exit(0)
+        exit(1)
 
     for keyword in keywords:
         cache_glossary[keyword] = google_query(keyword)
