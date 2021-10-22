@@ -6,10 +6,12 @@ from apiclient.discovery import build
 
 # paths
 PROJECT_HOME = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-GLOSSARY_PATH = os.path.join(PROJECT_HOME, 'course/sample-glossary.txt')
+GLOSSARY_PATH = os.path.join(PROJECT_HOME, 'course/glossary.txt')
 CACHE_GLOSSARY_PATH = os.path.join(PROJECT_HOME, '.cache/cache_glossary.json')
 
-API_KEY="AIzaSyCZUjk1AQaJE77rbhPntW9ILbVOMy9jvvI"
+API_KEY_PATH = os.path.join(PROJECT_HOME, 'API_KEYS.txt')
+API_KEY = ""
+CX = ""
 
 keywords = None
 cache_glossary = None
@@ -21,6 +23,18 @@ def get_rank(career):
     global cache_career
     global keywords
     global g_career
+    global API_KEY
+    global CX
+
+    if API_KEY == "":
+        try:
+            with open(API_KEY_PATH, 'r') as txt_file:
+                API_KEY = txt_file.readline().rstrip('\n')
+                CX = txt_file.readline().rstrip('\n')
+        except:
+            print('[refresh_cache]: failed to get api keys')
+            exit(1)
+
 
     cache_career = None 
 
@@ -105,9 +119,13 @@ def spacy_sim():
 def google_query(query_string):
     # TODO call API
     # ret: total number of results
+    global API_KEY
+    global CX
 
-    resource = build("customsearch", 'v1', developerKey=API_KEY).cse()
-    result = resource.list(q=query_string, cx='009557628044748784875:5lejfe73wrw').execute()
+    print('[kw_rank] query_string: ' + query_string)
+
+    resource = build("customsearch", 'v1', developerKey=API_KEY).cse().siterestrict()
+    result = resource.list(q=query_string, cx=CX).execute()
 
     if result == None:
         print('*** API CALL ERROR ***')
