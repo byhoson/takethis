@@ -19,9 +19,10 @@ def google_query(query_string):
     # ret: total number of results
     global API_KEY
     global CX
-    print(API_KEY)
-    print(CX)
-    resource = build("customsearch", 'v1', developerKey=API_KEY).cse()
+
+    print('[refresh cache] query_string: ' + query_string)
+
+    resource = build("customsearch", 'v1', developerKey=API_KEY).cse().siterestrict()
     result = resource.list(q=query_string, cx=CX).execute()
 
     if result == None:
