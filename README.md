@@ -35,7 +35,27 @@ python3 [parse | crawl]-[data].py
 python3 extract-data.py
 ```
 ---
-## Initialzing Cache (optional)
+## Creating Signatures
+prerequisite : google custom search api
+you first have to obtain your private api key from cse.google.com in order to create signatures for arbitrary career keywords.
+For cached keywords, api is not necessary.
+after creating one, you should add your api key and cx into API_KEYS.txt in the root directory in the following form:
+```
+<API_KEYS.txt>
+your_api_key
+your_cx
+```
+---
+## Initializing The Cache (optional)
+To accelerate the query, the cache system for preestablished career keywords is provided.
+to refresh the cache, type
 ```
 python3 scripts/refresh-cache.py
 ```
+
+to clean the cache, type
+```
+python3 scripts/clean-cache.sh
+```
+---
+# Querying Courses
